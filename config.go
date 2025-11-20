@@ -21,13 +21,10 @@ func NewConfig(cfg *oauth2.Config) *Config {
 // HTTP transport will be obtained from options.
 // The returned client and its Transport should not be modified.
 func (c *Config) Client(t *oauth2.Token, ops ...ConfigClientOp) *http.Client {
-	var options configClientOp
-	for _, op := range ops {
-		op(&options)
-	}
+	options := BuildConfigClientOptions(ops...)
 	return NewClient(
-		c.tokenSource(t, options.tokenSourceOps()), // NewClient will reuse tokenSource
-		options.clientOps()...)
+		c.tokenSource(t, options.TokenSourceOps()), // NewClient will reuse tokenSource
+		options.ClientOps()...)
 }
 
 // TokenSource returns a TokenSource that returns t until t expires,
@@ -41,7 +38,7 @@ func (c *Config) TokenSource(t *oauth2.Token, ops ...TokenSourceOp) TokenSource 
 
 func (c *Config) tokenSource(t *oauth2.Token, ops []TokenSourceOp) TokenSource {
 	tkr := &tokenRefresher{
-		ops:  makeTokenSourceOps(ops),
+		ops:  BuildTokenSourceOptions(ops...),
 		conf: c.Config,
 	}
 	if t != nil {
@@ -53,7 +50,7 @@ func (c *Config) tokenSource(t *oauth2.Token, ops []TokenSourceOp) TokenSource {
 // tokenRefresher is a TokenSource that makes "grant_type"=="refresh_token"
 // HTTP requests to renew a token using a RefreshToken.
 type tokenRefresher struct {
-	ops          *tokenSourceOps
+	ops          *TokenSourceOptions
 	conf         *oauth2.Config
 	refreshToken string
 }
@@ -64,7 +61,7 @@ type tokenRefresher struct {
 // synchronizes calls to this method with its own mutex.
 func (tf *tokenRefresher) TokenContext(ctx context.Context) (*oauth2.Token, error) {
 	src := tf.conf.TokenSource(
-		tf.ops.ctx(ctx),
+		tf.ops.WithOauth2HTTPClient(ctx),
 		&oauth2.Token{RefreshToken: tf.refreshToken},
 	)
 	tk, err := src.Token()

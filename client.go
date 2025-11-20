@@ -22,6 +22,9 @@ func NewClient(src TokenSource, ops ...ClientOp) *http.Client {
 			Source: ReuseTokenSource(nil, src),
 			Base:   options.client.Transport,
 		},
+		CheckRedirect: options.client.CheckRedirect,
+		Jar:           options.client.Jar,
+		Timeout:       options.client.Timeout,
 	}
 }
 

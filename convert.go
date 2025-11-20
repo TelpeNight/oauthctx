@@ -13,17 +13,17 @@ type Oauth2TokenConfig interface {
 func ConvertImmutable(conf Oauth2TokenConfig, ops ...TokenSourceOp) TokenSource {
 	return &convertTokenSrc{
 		new: conf,
-		ops: makeTokenSourceOps(ops),
+		ops: BuildTokenSourceOptions(ops...),
 	}
 }
 
 type convertTokenSrc struct {
 	new Oauth2TokenConfig
-	ops *tokenSourceOps
+	ops *TokenSourceOptions
 }
 
 func (c *convertTokenSrc) TokenContext(ctx context.Context) (*oauth2.Token, error) {
-	src := c.new.TokenSource(c.ops.ctx(ctx))
+	src := c.new.TokenSource(c.ops.WithOauth2HTTPClient(ctx))
 	return src.Token()
 }
 

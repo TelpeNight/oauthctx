@@ -14,18 +14,23 @@ implementation as much as possible.
 The algorithm is the following:
 
 1. Wrap existing functionality into `TokenSource` implementation.
-This may come in to different flavours:
+This may come in two different "flavors":
 
-    * 'Immutable' token sources. They don't have any mutable inner state. These sources can be converted as simple as following:
+    * 'Immutable' token sources. They don't have any mutable inner state. 
+        We can capture their factories, like `clientcredentials.Config`, and reuse them every time when we need a new token:
         ```go
-        src := c.new.TokenSource(ctx)
-        return src.Token()
+        func (c *convertTokenSrc) TokenContext(ctx context.Context) (*oauth2.Token, error) {
+            src := c.config.TokenSource(ctx)
+            return src.Token()
+        }
         ```
       See [convert.go](convert.go) and [clientcredentials.go](clientcredentials.go) for the reference.
       Package also provides generic purpose `ConvertImmutable` and `NewOauth2TokenSource` to simplify this.
    
-    * 'Mutable' token sources, such as `oauth2.tokenRefresher`. They have inner state, that can be updated on any call.
-      To mimic this behavior we need some extra work. See [config.go](config.go)
+    * 'Mutable' token sources, such as `oauth2.tokenRefresher`.
+       We can neither pass Context to underlying `oauth2.TokenSource`, nor use their factory on every call, as it have inner state that can be lost.
+       This logic has to be reimplemented in this module, but it is relatively short.
+       See [config.go](config.go)
 
 2. Then wrap new `oauthctx.TokenSource` with `oauthctx.ReuseTokenSource`. It will refresh expired token.
    Also it provides Context-aware synchronisation.

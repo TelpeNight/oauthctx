@@ -24,13 +24,10 @@ func NewClientCredentials(cfg *clientcredentials.Config) *ClientCredentials {
 //
 // The returned Client and its Transport should not be modified.
 func (c *ClientCredentials) Client(ops ...ConfigClientOp) *http.Client {
-	var options configClientOp
-	for _, op := range ops {
-		op(&options)
-	}
+	options := BuildConfigClientOptions(ops...)
 	return NewClient(
-		c.tokenSource(options.tokenSourceOps()), // NewClient will reuse tokenSource
-		options.clientOps()...)
+		c.tokenSource(options.TokenSourceOps()), // NewClient will reuse tokenSource
+		options.ClientOps()...)
 }
 
 // Token uses client credentials to retrieve a token.

@@ -53,7 +53,7 @@ func (s *reuseTokenSource) TokenContext(ctx context.Context) (*oauth2.Token, err
 		return nil, ctx.Err()
 	}
 
-	if s.t.Valid() {
+	if s.t.Valid() && !isExpired(ctx) {
 		return s.t, nil
 	}
 
@@ -63,4 +63,14 @@ func (s *reuseTokenSource) TokenContext(ctx context.Context) (*oauth2.Token, err
 	}
 	s.t = t
 	return t, nil
+}
+
+type expiredTokenKey struct{}
+
+func WithExpiredToken(ctx context.Context) context.Context {
+	return context.WithValue(ctx, expiredTokenKey{}, expiredTokenKey{})
+}
+
+func isExpired(ctx context.Context) bool {
+	return ctx.Value(expiredTokenKey{}) != nil
 }

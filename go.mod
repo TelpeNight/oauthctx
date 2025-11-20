@@ -1,9 +1,9 @@
 module github.com/TelpeNight/oauthctx
 
-go 1.22
+go 1.24.0
 
 require (
-	golang.org/x/oauth2 v0.24.0
+	golang.org/x/oauth2 v0.33.0
 	google.golang.org/grpc v1.69.0
 )
 
