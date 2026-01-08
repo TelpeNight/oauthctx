@@ -12,6 +12,7 @@ import (
 // client application information and the server's endpoint URLs.
 type ClientCredentials struct{ *clientcredentials.Config }
 
+// NewClientCredentials creates new ClientCredentials
 func NewClientCredentials(cfg *clientcredentials.Config) *ClientCredentials {
 	return &ClientCredentials{cfg}
 }
@@ -23,17 +24,22 @@ func NewClientCredentials(cfg *clientcredentials.Config) *ClientCredentials {
 // is used.
 //
 // The returned Client and its Transport should not be modified.
-func (c *ClientCredentials) Client(ops ...ConfigClientOp) *http.Client {
-	options := BuildConfigClientOptions(ops...)
+func (c *ClientCredentials) Client(ops ...RequestFlowOp) *http.Client {
+	conf := NewRequestFlowConfig(ops...)
 	return NewClient(
-		c.tokenSource(options.TokenSourceOps()), // NewClient will reuse tokenSource
-		options.ClientOps()...)
+		c.tokenSource(conf.TokenSourceOps()), // NewClient will reuse tokenSource
+		conf.ClientOps()...)
 }
 
 // Token uses client credentials to retrieve a token.
+func (c *ClientCredentials) Token(ctx context.Context) (*oauth2.Token, error) {
+	return c.Config.Token(ctx)
+}
+
+// TokenWithOptions uses client credentials to retrieve a token.
 //
 // The provided options optionally controls which HTTP client is used.
-func (c *ClientCredentials) Token(ctx context.Context, ops ...TokenSourceOp) (*oauth2.Token, error) {
+func (c *ClientCredentials) TokenWithOptions(ctx context.Context, ops ...TokenSourceOp) (*oauth2.Token, error) {
 	return c.tokenSource(ops).TokenContext(ctx)
 }
 
@@ -47,5 +53,5 @@ func (c *ClientCredentials) TokenSource(ops ...TokenSourceOp) TokenSource {
 }
 
 func (c *ClientCredentials) tokenSource(ops []TokenSourceOp) TokenSource {
-	return ConvertImmutable(c.Config, ops...)
+	return AdoptTokenSourceWithContext(c.Config, ops...)
 }

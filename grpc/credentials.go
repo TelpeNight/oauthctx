@@ -10,7 +10,7 @@ import (
 	"github.com/TelpeNight/oauthctx"
 )
 
-// TokenSource supplies PerRPCCredentials from an oauth2.TokenSource.
+// TokenSource supplies PerRPCCredentials from an oauthctx.TokenSource.
 type TokenSource struct {
 	oauthctx.TokenSource
 }

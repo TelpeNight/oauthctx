@@ -28,14 +28,15 @@ func NewClient(src TokenSource, ops ...ClientOp) *http.Client {
 	}
 }
 
-// ClientWithRequestClient sets transport, that will be used after obtaining token to make a real request
+// ClientOp is an option for NewClient
+type ClientOp func(o *clientOp)
+
+// ClientWithRequestClient is an option for underlying request client
 func ClientWithRequestClient(client *http.Client) ClientOp {
 	return func(o *clientOp) {
 		o.client = client
 	}
 }
-
-type ClientOp func(o *clientOp)
 
 type clientOp struct {
 	client *http.Client

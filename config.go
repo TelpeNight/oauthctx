@@ -12,6 +12,7 @@ import (
 // For the client credentials 2-legged OAuth2 flow, see the ClientCredentials.
 type Config struct{ *oauth2.Config }
 
+// NewConfig creates new Config
 func NewConfig(cfg *oauth2.Config) *Config {
 	return &Config{Config: cfg}
 }
@@ -20,11 +21,11 @@ func NewConfig(cfg *oauth2.Config) *Config {
 // The token will auto-refresh as necessary. The underlying
 // HTTP transport will be obtained from options.
 // The returned client and its Transport should not be modified.
-func (c *Config) Client(t *oauth2.Token, ops ...ConfigClientOp) *http.Client {
-	options := BuildConfigClientOptions(ops...)
+func (c *Config) Client(t *oauth2.Token, ops ...RequestFlowOp) *http.Client {
+	conf := NewRequestFlowConfig(ops...)
 	return NewClient(
-		c.tokenSource(t, options.TokenSourceOps()), // NewClient will reuse tokenSource
-		options.ClientOps()...)
+		c.tokenSource(t, conf.TokenSourceOps()), // NewClient will reuse tokenSource
+		conf.ClientOps()...)
 }
 
 // TokenSource returns a TokenSource that returns t until t expires,
@@ -38,8 +39,8 @@ func (c *Config) TokenSource(t *oauth2.Token, ops ...TokenSourceOp) TokenSource 
 
 func (c *Config) tokenSource(t *oauth2.Token, ops []TokenSourceOp) TokenSource {
 	tkr := &tokenRefresher{
-		ops:  BuildTokenSourceOptions(ops...),
-		conf: c.Config,
+		srcConf:   NewTokenSourceConfig(ops...),
+		oauthConf: c.Config,
 	}
 	if t != nil {
 		tkr.refreshToken = t.RefreshToken
@@ -50,8 +51,8 @@ func (c *Config) tokenSource(t *oauth2.Token, ops []TokenSourceOp) TokenSource {
 // tokenRefresher is a TokenSource that makes "grant_type"=="refresh_token"
 // HTTP requests to renew a token using a RefreshToken.
 type tokenRefresher struct {
-	ops          *TokenSourceOptions
-	conf         *oauth2.Config
+	srcConf      *TokenSourceConfig
+	oauthConf    *oauth2.Config
 	refreshToken string
 }
 
@@ -60,8 +61,8 @@ type tokenRefresher struct {
 // Within this package, it is used by reuseTokenSource which
 // synchronizes calls to this method with its own mutex.
 func (tf *tokenRefresher) TokenContext(ctx context.Context) (*oauth2.Token, error) {
-	src := tf.conf.TokenSource(
-		tf.ops.WithOauth2HTTPClient(ctx),
+	src := tf.oauthConf.TokenSource(
+		tf.srcConf.WithOauth2HTTPClient(ctx),
 		&oauth2.Token{RefreshToken: tf.refreshToken},
 	)
 	tk, err := src.Token()

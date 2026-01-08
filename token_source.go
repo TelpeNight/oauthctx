@@ -6,6 +6,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// TokenSource is a core interface for context-aware logic
 type TokenSource interface {
 	TokenContext(ctx context.Context) (*oauth2.Token, error)
 }
@@ -67,6 +68,7 @@ func (s *reuseTokenSource) TokenContext(ctx context.Context) (*oauth2.Token, err
 
 type expiredTokenKey struct{}
 
+// WithExpiredToken makes possible to force ReuseTokenSource to retrieve a new token
 func WithExpiredToken(ctx context.Context) context.Context {
 	return context.WithValue(ctx, expiredTokenKey{}, expiredTokenKey{})
 }
