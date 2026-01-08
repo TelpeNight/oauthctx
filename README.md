@@ -1,4 +1,6 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/TelpeNight/oauthctx.svg)](https://pkg.go.dev/github.com/TelpeNight/oauthctx)
+![GitHub License](https://img.shields.io/github/license/TelpeNight/oauthctx)
+![GitHub Tag](https://img.shields.io/github/v/tag/TelpeNight/oauthctx)
 
 # oauthctx
 
